@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
 	Typography,
 	Container,
@@ -28,7 +28,11 @@ interface DynamicField {
 	type: 'dollar' | 'percent'
 }
 
-const ProfitCalculator: React.FC = () => {
+interface ProfitCalculatorProps {
+	setProfit: (profit: number | null) => void
+}
+
+const ProfitCalculator: React.FC<ProfitCalculatorProps> = ({ setProfit }) => {
 	const [salePrice, setSalePrice] = useState<string>('')
 	const [commissionPct, setCommissionPct] = useState<string>('')
 	const [sellerConcessions, setSellerConcessions] = useState<string>('')
@@ -41,13 +45,13 @@ const ProfitCalculator: React.FC = () => {
 		'dollar' | 'percent'
 	>('dollar')
 	const [dynamicFields, setDynamicFields] = useState<DynamicField[]>([])
-	const [profit, setProfit] = useState<number | null>(null)
 	const [error, setError] = useState<string | null>(null)
 	const [modalOpen, setModalOpen] = useState<boolean>(false)
 	const [newFieldLabel, setNewFieldLabel] = useState<string>('')
 	const [newFieldType, setNewFieldType] = useState<'dollar' | 'percent'>(
 		'dollar'
 	)
+	const newFieldLabelRef = useRef<HTMLInputElement>(null)
 
 	// Load data from localStorage on component mount
 	useEffect(() => {
@@ -123,6 +127,13 @@ const ProfitCalculator: React.FC = () => {
 		closingCostsType,
 		dynamicFields
 	])
+
+	// Auto-focus the first input in the modal when it opens
+	useEffect(() => {
+		if (modalOpen && newFieldLabelRef.current) {
+			newFieldLabelRef.current.focus()
+		}
+	}, [modalOpen])
 
 	const handleInputChange =
 		(setter: React.Dispatch<React.SetStateAction<string>>) =>
@@ -236,34 +247,8 @@ const ProfitCalculator: React.FC = () => {
 		}
 	}
 
-	const getProfitColor = (profit: number | null) => {
-		if (profit === null) return 'black'
-		if (profit > 0) return 'green'
-		if (profit < 0) return 'red'
-		return 'black'
-	}
-
 	return (
 		<Container>
-			<Grid
-				container
-				justifyContent='space-between'
-				alignItems='center'
-				className={styles.pageHeader}
-			>
-				<Grid item>
-					<Typography variant='h4' component='h1' gutterBottom>
-						Profit Calculator
-					</Typography>
-				</Grid>
-				<Grid item>
-					{profit !== null && (
-						<Typography variant='h5' style={{ color: getProfitColor(profit) }}>
-							Profit: ${formatNumberWithCommas(profit.toFixed(2))}
-						</Typography>
-					)}
-				</Grid>
-			</Grid>
 			<Grid container spacing={3} onKeyDown={handleKeyDown}>
 				<Grid item xs={12} md={6}>
 					<Typography variant='h6' component='h3' gutterBottom>
@@ -433,6 +418,8 @@ const ProfitCalculator: React.FC = () => {
 						value={newFieldLabel}
 						onChange={(e) => setNewFieldLabel(e.target.value)}
 						style={{ marginTop: '16px' }}
+						inputRef={newFieldLabelRef}
+						autoFocus
 					/>
 					<FormControl
 						fullWidth
