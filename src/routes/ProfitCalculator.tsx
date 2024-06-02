@@ -9,7 +9,6 @@ import {
 	InputLabel,
 	Select,
 	MenuItem,
-	IconButton,
 	Modal,
 	Box
 } from '@mui/material'
@@ -18,7 +17,7 @@ import {
 	parseFormattedNumber
 } from '../utils/formatNumber'
 import { setCaretPosition } from '../utils/caretUtils'
-import DeleteIcon from '@mui/icons-material/Delete'
+import InputWithIcon from '../components/InputWithIcon'
 import styles from '../App.module.scss'
 
 interface DynamicField {
@@ -224,11 +223,16 @@ const ProfitCalculator: React.FC<ProfitCalculatorProps> = ({ setProfit }) => {
 			return total + fieldValue
 		}, 0)
 
+		// Calculate the adjusted sale price after seller concessions
+		const adjustedSalePrice = salePriceNum - sellerConcessionsNum
+
+		// Calculate the commission based on the adjusted sale price
+		const commissionAmount = adjustedSalePrice * commissionPctNum
+
 		const profit =
-			salePriceNum -
+			adjustedSalePrice -
 			currentMortgageLoanNum -
-			salePriceNum * commissionPctNum -
-			sellerConcessionsNum -
+			commissionAmount -
 			closingCostsNum -
 			dynamicFieldsTotal
 		setProfit(profit)
@@ -281,106 +285,106 @@ const ProfitCalculator: React.FC<ProfitCalculatorProps> = ({ setProfit }) => {
 						required
 						style={{ marginBottom: '16px' }}
 					/>
-					<FormControl
-						fullWidth
-						variant='outlined'
-						style={{ marginBottom: '16px' }}
-					>
-						<InputLabel>Estimated Closing Costs</InputLabel>
-						<Select
-							value={closingCostsType}
-							onChange={(e) =>
-								setClosingCostsType(e.target.value as 'dollar' | 'percent')
-							}
-							label='Estimated Closing Costs'
-							required
-						>
-							<MenuItem value='dollar'>Dollar Amount</MenuItem>
-							<MenuItem value='percent'>Percentage</MenuItem>
-						</Select>
-					</FormControl>
-					<TextField
-						label={
-							closingCostsType === 'dollar'
-								? 'Estimated Closing Costs ($)'
-								: 'Estimated Closing Costs (%)'
-						}
-						variant='outlined'
-						fullWidth
-						value={closingCosts}
-						onChange={handleInputChange(setClosingCosts)}
-						required
-					/>
+					<Grid container spacing={2}>
+						<Grid item xs={12}>
+							<Grid container spacing={1}>
+								<Grid item xs={12} sm={6}>
+									<FormControl
+										fullWidth
+										variant='outlined'
+										style={{ marginBottom: '16px' }}
+									>
+										<InputLabel>Closing Costs</InputLabel>
+										<Select
+											value={closingCostsType}
+											onChange={(e) =>
+												setClosingCostsType(
+													e.target.value as 'dollar' | 'percent'
+												)
+											}
+											label='Closing Costs'
+											required
+										>
+											<MenuItem value='dollar'>Dollar Amount</MenuItem>
+											<MenuItem value='percent'>Percentage</MenuItem>
+										</Select>
+									</FormControl>
+								</Grid>
+								<Grid item xs={12} sm={6}>
+									<TextField
+										label={
+											closingCostsType === 'dollar'
+												? 'Closing Costs ($)'
+												: 'Closing Costs (%)'
+										}
+										variant='outlined'
+										fullWidth
+										value={closingCosts}
+										onChange={handleInputChange(setClosingCosts)}
+										required
+									/>
+								</Grid>
+							</Grid>
+						</Grid>
+						<Grid item xs={12}>
+							<Grid container spacing={1}>
+								<Grid item xs={12} sm={6}>
+									<FormControl
+										fullWidth
+										variant='outlined'
+										style={{ marginBottom: '16px' }}
+									>
+										<InputLabel>Seller Concessions</InputLabel>
+										<Select
+											value={sellerConcessionsType}
+											onChange={(e) =>
+												setSellerConcessionsType(
+													e.target.value as 'dollar' | 'percent'
+												)
+											}
+											label='Seller Concessions'
+										>
+											<MenuItem value='dollar'>Dollar Amount</MenuItem>
+											<MenuItem value='percent'>Percentage</MenuItem>
+										</Select>
+									</FormControl>
+								</Grid>
+								<Grid item xs={12} sm={6}>
+									<TextField
+										label={
+											sellerConcessionsType === 'dollar'
+												? 'Seller Concessions ($)'
+												: 'Seller Concessions (%)'
+										}
+										variant='outlined'
+										fullWidth
+										value={sellerConcessions}
+										onChange={handleInputChange(setSellerConcessions)}
+										style={{ marginBottom: '16px' }}
+									/>
+								</Grid>
+							</Grid>
+						</Grid>
+					</Grid>
 				</Grid>
 				<Grid item xs={12} md={6}>
-					<Typography variant='h6' component='h3' gutterBottom>
-						Optional Fields
-					</Typography>
-					<FormControl
-						fullWidth
-						variant='outlined'
-						style={{ marginBottom: '16px' }}
-					>
-						<InputLabel>Seller Concessions</InputLabel>
-						<Select
-							value={sellerConcessionsType}
-							onChange={(e) =>
-								setSellerConcessionsType(e.target.value as 'dollar' | 'percent')
-							}
-							label='Seller Concessions'
-						>
-							<MenuItem value='dollar'>Dollar Amount</MenuItem>
-							<MenuItem value='percent'>Percentage</MenuItem>
-						</Select>
-					</FormControl>
-					<TextField
-						label={
-							sellerConcessionsType === 'dollar'
-								? 'Seller Concessions ($)'
-								: 'Seller Concessions (%)'
-						}
-						variant='outlined'
-						fullWidth
-						value={sellerConcessions}
-						onChange={handleInputChange(setSellerConcessions)}
-						style={{ marginBottom: '16px' }}
-					/>
 					<Typography variant='h6' component='h3' gutterBottom>
 						Additional Fields
 					</Typography>
 					{dynamicFields.map((field) => (
-						<Grid
-							container
-							spacing={3}
+						<InputWithIcon
 							key={field.id}
-							alignItems='center'
-							style={{ marginBottom: '16px' }}
-						>
-							<Grid item xs={10}>
-								<TextField
-									label={`${field.label} (${
-										field.type === 'dollar' ? '$' : '%'
-									})`}
-									variant='outlined'
-									fullWidth
-									value={field.value}
-									onChange={(e) =>
-										handleDynamicFieldChange(
-											field.id,
-											'value',
-											formatNumberWithCommas(
-												parseFormattedNumber(e.target.value)
-											)
-										)
-									}
-								/>
-							</Grid>
-							<Grid item xs={2}>
-								<IconButton onClick={() => removeDynamicField(field.id)}>
-									<DeleteIcon />
-								</IconButton>
-							</Grid>
-						</Grid>
+							label={`${field.label} (${field.type === 'dollar' ? '$' : '%'})`}
+							value={field.value}
+							onChange={(e) =>
+								handleDynamicFieldChange(
+									field.id,
+									'value',
+									formatNumberWithCommas(parseFormattedNumber(e.target.value))
+								)
+							}
+							onDelete={() => removeDynamicField(field.id)}
+						/>
 					))}
 					<Button variant='contained' color='primary' onClick={addDynamicField}>
 						Add Field
